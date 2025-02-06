@@ -15,6 +15,7 @@ class UserController extends Controller
 {
     public function register(RegisterUserRequest $request)
     {
+
         $validated = $request->validated();
         $user = User::create($validated);
         // Auth::login($user);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use App\Http\Resources\Taskcollection;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     // logged in user to see all their tasks
     Route::get('/user/assigned/mytasks', [TaskController::class, 'myTasks']);
-    Route::get('/task/received/{task}', [TaskController::class, 'showMyTask']);
+    // Route::get('/task/received/{task}', [TaskController::class, 'showMyTask']);
 });
 
 // Assign task to users based on userId and taskId
@@ -36,3 +37,6 @@ Route::post('/tasks/{taskId}/{userId}', [TaskController::class, 'assignTask']);
 Route::get('/tasks/assigned/{task}', [TaskController::class, 'showAssignedTask']);
 // Fet all the users that have been assigned a task along with the tasks
 Route::get('/tasks/all/assigned', [TaskController::class, 'allAssignedTasks']);
+
+Route::get('/send-mail', [TestController::class, 'SendTestMail']);
+Route::post('/{taskId}/file-upload', [TaskController::class, 'uploadFile']);

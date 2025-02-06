@@ -3,17 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TaskRequest;
-use App\Http\Resources\Taskcollection;
+use App\Http\Resources\AssignTaskResource;
 use App\Http\Resources\TaskResouce;
 use App\Http\Resources\TaskResourceCollection;
-use App\Jobs\NewTaskJob;
 use App\Models\Task;
 use App\Models\User;
-use App\Notifications\newTask;
 use App\Notifications\NewTask as NotificationsNewTask;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+// use Illuminate\Support\Facades\Auth;
+// use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+// use Illuminate\Support\Facades\Gate;
+// use Illuminate\Auth\Access\Response;
 
 class TaskController extends Controller
 {
@@ -66,8 +67,10 @@ class TaskController extends Controller
         ], 201);
     }
 
-    public function assignTask(Request $request, $taskId, $userId)
+    public function assignTask($taskId, $userId)
     {
+        $this->authorize('admin-and-manager-action');
+
         $user = User::find($userId);
         $task = Task::find($taskId);
 
@@ -85,12 +88,12 @@ class TaskController extends Controller
         // Send notification
         $user->notify(new NotificationsNewTask($task));
 
-        return response()->json($taskUser);
+        return response()->json(new AssignTaskResource($taskUser));
     }
 
     public function allAssignedTasks()
     {
-        // Fet all the users that have been assigned a task along with the tasks
+        // Fetch all the users that have been assigned a task along with the tasks
         $assignedTasks = Task::withWhereHas('users')->get();
 
         // Return the tasks and their users
@@ -118,7 +121,6 @@ class TaskController extends Controller
     {
         // logged in user to see all their tasks
         $tasks = auth()->user()->tasks;
-
         return response()->json(
             [
                 'message' => 'Here is the list of all the tasks assigned to you',
@@ -128,12 +130,18 @@ class TaskController extends Controller
         );
     }
 
-    // public function showMyTask()
-    // {
-    //     $task = Task::con
-    //     if (!$task->contains(auth()->user())) {
-    //         return response()->json(['message' => 'This is not your task'], 404);
-    //     }
-    //     return response()->json($task);
-    // }
+    public function uploadFile(Request $request, $id)
+    {
+        // fetch the task and upload a file to it
+        $task = Task::find($id);
+
+        $request->validate([
+            'file' => ['required', 'file']
+        ]);
+
+        $path = $request->file('file')->store('tasks', 'public');
+
+        $task->update(['file' => $path]);
+        return response()->json(['message' => 'file upload successful!', 'file_path' => Storage::url($path), 'task' => new TaskResouce($task)], 201);
+    }
 }
